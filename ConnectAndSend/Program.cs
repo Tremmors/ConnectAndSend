@@ -22,6 +22,7 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 
 namespace ConnectAndSend
 {   // namespace ConnectAndSend
@@ -41,6 +42,7 @@ namespace ConnectAndSend
         ///         args[0] = Hostname or IP to connect to
         ///         args[1] = Port to connect on
         ///         args[2] = data to send once connected.
+        ///         args[3] = How long to wait before disconnecting and exiting (milliseconds).
         /// </param>
         static void Main( string[] args )
         {   // Main
@@ -57,8 +59,11 @@ namespace ConnectAndSend
                 string strHost      = args[0];
                 string strPort      = args[1];
                 string strCommand   = args[2];
-                int iPort;
 
+                string strWait      = args.Length > 3 ? args[3] : "";
+
+                int iPort;
+                int wait = 0;
                 strCommand = strCommand.Replace( @"\n", "\n" ).Replace( @"\\", "\\" ).Replace( @"\r", "\r" ).Replace( "\\\"", "\"" );
                 
                 if ( int.TryParse( strPort, out iPort ) )
@@ -73,6 +78,7 @@ namespace ConnectAndSend
                     else
                     {   // Valid Port Number
 
+                        int.TryParse(strWait, out wait);
 
                         try
                         {   // TRY
@@ -81,8 +87,15 @@ namespace ConnectAndSend
                             Encoding enc = Encoding.GetEncoding( "Windows-1252" );
                             sock.Connect( strHost, iPort );
                             sock.Send( enc.GetBytes( strCommand ) );
-                            sock.Close();
 
+                            if (wait > 0)
+                            {   // Disconnect Delay specified
+                                
+                                Thread.Sleep(wait);
+
+                            }   // Disconnect Delay specified
+                            sock.Close();
+                            
                         }   // TRY
                         catch (Exception ex)
                         {   // CATCH : Exception
@@ -107,7 +120,7 @@ namespace ConnectAndSend
         static void HowDoIUseThis()
         {   // HowDoIUseThis
 
-            Console.WriteLine( "ConnectAndSend.exe [host] [port] \"[command]\"" );
+            Console.WriteLine( "ConnectAndSend.exe [host] [port] \"[command]\" [Wait] " );
             Console.WriteLine( "\t Connects to a specified TCP/IP port and sends some specific " );
             Console.WriteLine( "\t data before disconnecting" );
             Console.WriteLine( "\thost\t: The Hostname or IP to connect to" );
@@ -117,7 +130,8 @@ namespace ConnectAndSend
             Console.WriteLine( "\t\t\t\\r - Carriage Return" );
             Console.WriteLine( "\t\t\t\\n - Line Feed" );
             Console.WriteLine( "\t\t\t\\\" - Quote character" );
-
+            Console.WriteLine("\tWait\t: (Optional) Number of milliseconds to pause after sending before ");
+            Console.WriteLine("\t\t\tdisconnecting and exiting.");
         }   // HowDoIUseThis
 
     }   // class Program
